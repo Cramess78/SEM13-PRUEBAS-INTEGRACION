@@ -2,9 +2,7 @@ package com.tecsup.petclinic.mapper;
 
 import com.tecsup.petclinic.dtos.VisitDTO;
 import com.tecsup.petclinic.entities.Visit;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.NullValueMappingStrategy;
+import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
 import java.time.LocalDate;
@@ -15,28 +13,34 @@ import java.util.List;
 @Mapper(componentModel = "spring", nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
 public interface VisitMapper {
 
-    com.tecsup.petclinic.mapper.VisitMapper INSTANCE = Mappers.getMapper(com.tecsup.petclinic.mapper.VisitMapper.class);
+    VisitMapper INSTANCE = Mappers.getMapper(VisitMapper.class);
+
     @Mapping(source = "pet.id", target = "petId")
     @Mapping(source = "visitDate", target = "visitDate", qualifiedByName = "localDateToString")
     VisitDTO mapToDto(Visit visit);
+
     @Mapping(source = "visitDate", target = "visitDate", qualifiedByName = "stringToLocalDate")
     @Mapping(source = "petId", target = "pet", ignore = true)
     Visit mapToEntity(VisitDTO visitDTO);
-    @org.mapstruct.Named("stringToLocalDate")
-    default LocalDate stringToLocalDate(String dateStr) { if (dateStr == null || dateStr.isEmpty()) { return null; }
-        LocalDate date = null;
-        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        try { date = LocalDate.parse(dateStr, dateFormat);} catch (DateTimeParseException e) {e.printStackTrace();}
-        return date;
-    }
 
-    @org.mapstruct.Named("localDateToString")
-    default String localDateToString(LocalDate date) {
-        if (date != null) { DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            return dateFormat.format(date);
-        } else { return "";}
-    }
     List<VisitDTO> mapToDtoList(List<Visit> visitList);
     List<Visit> mapToEntityList(List<VisitDTO> visitDTOList);
 
+    @Named("stringToLocalDate")
+    default LocalDate stringToLocalDate(String dateStr) {
+        if (dateStr == null || dateStr.isEmpty()) return null;
+        try {
+            return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        } catch (DateTimeParseException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Named("localDateToString")
+    default String localDateToString(LocalDate date) {
+        return (date != null)
+                ? date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                : "";
+    }
 }
