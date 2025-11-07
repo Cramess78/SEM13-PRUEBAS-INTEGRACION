@@ -49,7 +49,7 @@ public class VisitControllerTest {
         visitDTO.setPetId(10);
 
         pet = new Pet();
-        pet.setId(Math.toIntExact(10));
+        pet.setId(10);
         pet.setName("Firulais");
 
         visit = new Visit();
