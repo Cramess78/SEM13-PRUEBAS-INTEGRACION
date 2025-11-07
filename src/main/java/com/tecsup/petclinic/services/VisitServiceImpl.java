@@ -15,18 +15,15 @@ import java.util.Optional;
 @Service
 @Slf4j
 public class VisitServiceImpl implements VisitService {
-
     private final VisitRepository visitRepository;
     private final VisitMapper visitMapper;
     private final PetRepository petRepository;
-
     // Constructor
     public VisitServiceImpl(VisitRepository visitRepository, VisitMapper visitMapper, PetRepository petRepository) {
         this.visitRepository = visitRepository;
         this.visitMapper = visitMapper;
         this.petRepository = petRepository;
     }
-
     // crear
     @Override
     public VisitDTO create(VisitDTO visitDTO) {
@@ -35,7 +32,6 @@ public class VisitServiceImpl implements VisitService {
         Visit newVisit = visitRepository.save(visit);
         return visitMapper.mapToDto(newVisit);
     }
-
     // actualizar
     @Override
     public VisitDTO update(VisitDTO visitDTO) {
@@ -44,7 +40,6 @@ public class VisitServiceImpl implements VisitService {
         Visit updatedVisit = visitRepository.save(visit);
         return visitMapper.mapToDto(updatedVisit);
     }
-
     // eliminar
     @Override
     public void delete(Integer id) throws VisitNotFoundException {
@@ -58,7 +53,6 @@ public class VisitServiceImpl implements VisitService {
                     .ifPresent(visit::setPet);
         }
     }
-
     //  se busca  la visita por el ID
     private VisitDTO findById(Integer id) throws VisitNotFoundException {
         Visit visit = visitRepository.findById(id)
