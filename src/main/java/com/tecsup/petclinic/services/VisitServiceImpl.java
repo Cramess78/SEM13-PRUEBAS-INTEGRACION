@@ -1,7 +1,6 @@
 package com.tecsup.petclinic.services;
 
 import com.tecsup.petclinic.dtos.VisitDTO;
-import com.tecsup.petclinic.entities.Pet;
 import com.tecsup.petclinic.entities.Visit;
 import com.tecsup.petclinic.exceptions.VisitNotFoundException;
 import com.tecsup.petclinic.mapper.VisitMapper;
@@ -10,7 +9,6 @@ import com.tecsup.petclinic.repositories.VisitRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
 
 @Service
 @Slf4j

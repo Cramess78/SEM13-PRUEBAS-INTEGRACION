@@ -1,122 +1,112 @@
 package com.tecsup.petclinic.webs;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tecsup.petclinic.dtos.VisitDTO;
+import com.tecsup.petclinic.entities.Pet;
 import com.tecsup.petclinic.entities.Visit;
-import com.tecsup.petclinic.services.VisitService;
+import com.tecsup.petclinic.exceptions.VisitNotFoundException;
+import com.tecsup.petclinic.mapper.VisitMapper;
+import com.tecsup.petclinic.repositories.PetRepository;
+import com.tecsup.petclinic.repositories.VisitRepository;
+import com.tecsup.petclinic.services.VisitServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
+import org.mockito.*;
+        import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.Arrays;
-import java.util.List;
+import java.time.LocalDate;
 import java.util.Optional;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.hasSize;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.junit.jupiter.api.Assertions.*;
+        import static org.mockito.Mockito.*;
 
 @SpringBootTest
-@AutoConfigureMockMvc
 public class VisitControllerTest {
 
-    private static final String VISIT_API_URL = "/visits";
-    
-    @Autowired
-    private MockMvc mockMvc;
+    @Mock
+    private VisitRepository visitRepository;
 
-    @MockBean
-    private VisitService visitService;
+    @Mock
+    private PetRepository petRepository;
 
-    private ObjectMapper objectMapper;
+    @Mock
+    private VisitMapper visitMapper;
+
+    @InjectMocks
+    private VisitServiceImpl visitService;
+
+    private VisitDTO visitDTO;
+    private Visit visit;
+    private Pet pet;
 
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper();
-    }
+        MockitoAnnotations.openMocks(this);
 
-    @Test
-    public void getAllVisits_ShouldReturnListOfVisits() throws Exception {
-        List<Visit> visits = Arrays.asList(
-                createVisit(1L, "2023-01-01", "10:00", "Checkup", 1L, 1L),
-                createVisit(2L, "2023-01-02", "11:00", "Follow-up", 1L, 2L)
-        );
-        when(visitService.findAll()).thenReturn(visits);
+        visitDTO = new VisitDTO();
+        visitDTO.setId(1);
+        visitDTO.setDescription("Consulta inicial");
+        visitDTO.setVisitDate("2025-11-07");
+        visitDTO.setPetId(10);
 
-        mockMvc.perform(get(VISIT_API_URL)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].id", is(1)))
-                .andExpect(jsonPath("$[0].description", is("Checkup")))
-                .andExpect(jsonPath("$[1].id", is(2)))
-                .andExpect(jsonPath("$[1].description", is("Follow-up")));
-    }
+        pet = new Pet();
+        pet.setId(Math.toIntExact(10));
+        pet.setName("Firulais");
 
-    @Test
-    public void getVisitById_WhenExists_ShouldReturnVisit() throws Exception {
-        Long visitId = 1L;
-        Visit visit = createVisit(visitId, "2023-01-01", "10:00", "Checkup", 1L, 1L);
-        when(visitService.findById(visitId)).thenReturn(visit);
-
-        mockMvc.perform(get(VISIT_API_URL + "/{id}", visitId)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(visitId.intValue()))
-                .andExpect(jsonPath("$.description", is("Checkup")));
-    }
-
-    @Test
-    public void getVisitById_WhenNotExists_ShouldReturnNotFound() throws Exception {
-        Long visitId = 99L;
-        when(visitService.findById(visitId)).thenThrow(new RuntimeException("Visit not found"));
-
-        mockMvc.perform(get(VISIT_API_URL + "/{id}", visitId)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isNotFound());
+        visit = new Visit();
+        visit.setDescription("Consulta inicial");
+        visit.setVisitDate(LocalDate.parse("2025-11-07"));
+        visit.setPet(pet);
     }
 
     /**
-     * SEGUNDO COMMIT - Pruebas para endpoints POST y PUT
-     * 
-     * @Test
-     * public void createVisit_WithValidData_ShouldReturnCreated() { ... }
-     * 
-     * @Test
-     * public void updateVisit_WithValidData_ShouldReturnUpdatedVisit() { ... }
+     * 🧪 Prueba: crear una visita
      */
+    @Test
+    void testCreateVisit() {
+        when(visitMapper.mapToEntity(any(VisitDTO.class))).thenReturn(visit);
+        when(petRepository.findById(anyInt())).thenReturn(Optional.of(pet));
+        when(visitRepository.save(any(Visit.class))).thenReturn(visit);
+        when(visitMapper.mapToDto(any(Visit.class))).thenReturn(visitDTO);
+
+        VisitDTO result = visitService.create(visitDTO);
+
+        assertNotNull(result);
+        assertEquals("Consulta inicial", result.getDescription());
+        verify(visitRepository, times(1)).save(any(Visit.class));
+    }
 
     /**
-     * TERCER COMMIT - Pruebas para endpoint DELETE y casos de error
-     * 
-     * @Test
-     * public void deleteVisit_WhenExists_ShouldReturnNoContent() { ... }
-     * 
-     * @Test
-     * public void createVisit_WithInvalidData_ShouldReturnBadRequest() { ... }
+     * 🧪 Prueba: actualizar una visita
      */
+    @Test
+    void testUpdateVisit() {
+        visitDTO.setDescription("Consulta de seguimiento");
+        visit.setDescription("Consulta de seguimiento");
 
-    // Helper method to create Visit objects
-    private Visit createVisit(Long id, String date, String time, String description, Long petId, Long vetId) {
-        Visit visit = new Visit();
-        visit.setId(id);
-        visit.setDate(date);
-        visit.setTime(time);
-        visit.setDescription(description);
-        // Aquí deberías establecer las relaciones con Pet y Vet si es necesario
-        return visit;
+        when(visitMapper.mapToEntity(any(VisitDTO.class))).thenReturn(visit);
+        when(petRepository.findById(anyInt())).thenReturn(Optional.of(pet));
+        when(visitRepository.save(any(Visit.class))).thenReturn(visit);
+        when(visitMapper.mapToDto(any(Visit.class))).thenReturn(visitDTO);
+
+        VisitDTO updated = visitService.update(visitDTO);
+
+        assertNotNull(updated);
+        assertEquals("Consulta de seguimiento", updated.getDescription());
+        verify(visitRepository, times(1)).save(any(Visit.class));
+    }
+
+    /**
+     * 🧪 Prueba: eliminar una visita
+     */
+    @Test
+    void testDeleteVisit() throws VisitNotFoundException {
+        when(visitRepository.findById(anyInt())).thenReturn(Optional.of(visit));
+        when(visitMapper.mapToDto(any(Visit.class))).thenReturn(visitDTO);
+
+        visitService.delete(1);
+
+        verify(visitRepository, times(1)).delete(any(Visit.class));
     }
 }
+
 
